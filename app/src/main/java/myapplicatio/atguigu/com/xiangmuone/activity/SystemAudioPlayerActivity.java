@@ -19,13 +19,18 @@ import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import java.io.File;
+
 import myapplicatio.atguigu.com.xiangmuone.IMusicPlayerSevice;
 import myapplicatio.atguigu.com.xiangmuone.R;
 import myapplicatio.atguigu.com.xiangmuone.service.MusicPlayerService;
+import myapplicatio.atguigu.com.xiangmuone.utils.LyricParaser;
 import myapplicatio.atguigu.com.xiangmuone.utils.Utils;
+import myapplicatio.atguigu.com.xiangmuone.view.LyricShowView;
 
 public class SystemAudioPlayerActivity extends AppCompatActivity implements View.OnClickListener {
 
+    private static final int SHOW_LYRIC = 2 ;
     private ImageView ivicon;
     private TextView tvArtist;
     private TextView tvName;
@@ -37,6 +42,7 @@ public class SystemAudioPlayerActivity extends AppCompatActivity implements View
     private Button btnAudioNext;
     private Button btnSwichLyrc;
     private int position;
+    private LyricShowView lyric_show_view;
 
     private MyReceiver receiver;
     //进度更新
@@ -62,6 +68,7 @@ public class SystemAudioPlayerActivity extends AppCompatActivity implements View
         btnAudioNext = (Button)findViewById( R.id.btn_audio_next );
         btnSwichLyrc = (Button)findViewById( R.id.btn_swich_lyrc );
         ivicon = (ImageView)findViewById(R.id.iv_icon);
+        lyric_show_view = (LyricShowView)findViewById(R.id.lyric_show_view);
 
         ivicon.setBackgroundResource(R.drawable.animation_list);
         AnimationDrawable drawable = (AnimationDrawable) ivicon.getBackground();
@@ -113,8 +120,15 @@ public class SystemAudioPlayerActivity extends AppCompatActivity implements View
     public void onClick(View v) {
         if ( v == btnAudioPlaymode ) {
             // Handle clicks for btnAudioPlaymode
+            changeplaymode();
         } else if ( v == btnAudioPre ) {
             // Handle clicks for btnAudioPre
+            try {
+                service.pre();
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+
         } else if ( v == btnAudioStartPause ) {
             // Handle clicks for btnAudioStartPause
 
@@ -136,9 +150,63 @@ public class SystemAudioPlayerActivity extends AppCompatActivity implements View
 
         } else if ( v == btnAudioNext ) {
             // Handle clicks for btnAudioNext
+            try {
+                if (!service.isPlaying()) {
+                    btnAudioStartPause.setBackgroundResource(R.drawable.btn_audio_pause_selector);
+                }
+                service.next();
+
+
+                service.next();
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
         } else if ( v == btnSwichLyrc ) {
             // Handle clicks for btnSwichLyrc
         }
+    }
+
+    private void changeplaymode() {
+        try {
+            int playmode =  service.getPlayMode();
+
+            if (playmode == MusicPlayerService.REPEATE_NOMAL) {
+                playmode = MusicPlayerService.REPEATE_SINGLE;
+            } else if (playmode == MusicPlayerService.REPEATE_SINGLE) {
+                playmode = MusicPlayerService.REPEATE_ALL;
+            } else if (playmode == MusicPlayerService.REPEATE_ALL) {
+                playmode = MusicPlayerService.REPEATE_NOMAL;
+            } else {
+                playmode = MusicPlayerService.REPEATE_NOMAL;
+            }
+            //保存到服务中
+            service.setPlayMode(playmode);
+            //校验按钮状态
+            checkButtonStatu();
+
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void checkButtonStatu() {
+        int playmode = 0;
+        try {
+            playmode = service.getPlayMode();
+            if (playmode == MusicPlayerService.REPEATE_NOMAL) {
+                btnAudioPlaymode.setBackgroundResource(R.drawable.btn_audio_playmode_normal_selector);
+            } else if (playmode == MusicPlayerService.REPEATE_SINGLE) {
+                btnAudioPlaymode.setBackgroundResource(R.drawable.btn_audio_playmode_single_selector);
+            } else if (playmode == MusicPlayerService.REPEATE_ALL) {
+                btnAudioPlaymode.setBackgroundResource(R.drawable.btn_audio_playmode_all_selector);
+            } else {
+                btnAudioPlaymode.setBackgroundResource(R.drawable.btn_audio_playmode_normal_selector);
+            }
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+
+
     }
 
     private IMusicPlayerSevice service;
@@ -154,15 +222,18 @@ public class SystemAudioPlayerActivity extends AppCompatActivity implements View
             service = IMusicPlayerSevice.Stub.asInterface(iBinder);
 
             if(service != null) {
-                try {
-                    //开始播放
-                    service.openAudio(position);
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                }
-            }else{
-                //再次显示
-                showViewData();
+                if(!notification) {
+                    try {
+                        //开始播放
+                        service.openAudio(position);
+
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                    }
+                }else{
+                    //再次显示
+                    showViewData();
+            }
             }
 
         }
@@ -182,6 +253,16 @@ public class SystemAudioPlayerActivity extends AppCompatActivity implements View
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             switch (msg.what){
+                case SHOW_LYRIC:
+                    try {
+                        int currentPosition = service.getCurrentPosition();
+
+                        lyric_show_view.setNextShowLyric(currentPosition);
+
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                    }
+                    break;
                 case PROGRESS:
                     try {
                         int currentPosition = service.getCurrentPosition();
@@ -246,6 +327,28 @@ public class SystemAudioPlayerActivity extends AppCompatActivity implements View
             //更新进度
             handler.sendEmptyMessage(PROGRESS);
 
+            checkButtonStatu();
+
+            String path = service.getAudioPath();//mnt/sdcard/audio/beij.mp3
+
+            path = path.substring(0,path.lastIndexOf("."));
+
+            File file = new File(path+".lrc");
+            if(!file.exists()){
+                file = new File(path+".txt");
+            }
+
+
+            LyricParaser lyricParaser = new LyricParaser();
+            lyricParaser.readFile(file);
+            
+            if(lyricParaser.isExistsLyric()) {
+
+                lyric_show_view.setLyrics(lyricParaser.getLyricBeens());
+                //歌词同步
+                handler.sendEmptyMessage(SHOW_LYRIC);
+            }
+
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -253,7 +356,11 @@ public class SystemAudioPlayerActivity extends AppCompatActivity implements View
 
     @Override
     protected void onDestroy() {
-
+        if(receiver != null) {
+            unregisterReceiver(receiver);
+            receiver = null;
+        }
+        
         if(conn != null) {
             unbindService(conn);
             conn = null;

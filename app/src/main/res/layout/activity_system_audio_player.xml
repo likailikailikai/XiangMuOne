@@ -8,6 +8,7 @@
     tools:context="myapplicatio.atguigu.com.xiangmuone.activity.SystemAudioPlayerActivity">
 
     <RelativeLayout
+        android:id="@+id/rl_top"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
@@ -22,8 +23,8 @@
             android:id="@+id/tv_artist"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="40dp"
             android:layout_centerHorizontal="true"
+            android:layout_marginTop="40dp"
             android:textColor="#ffffff"
             android:textSize="14sp" />
 
@@ -31,37 +32,37 @@
             android:id="@+id/tv_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="60dp"
             android:layout_centerHorizontal="true"
+            android:layout_marginTop="60dp"
             android:textColor="#ffffff"
             android:textSize="16sp" />
 
     </RelativeLayout>
 
     <LinearLayout
-        android:layout_alignParentBottom="true"
-        android:layout_marginBottom="8dp"
-        android:orientation="vertical"
+        android:id="@+id/ll_bottom"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        >
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="8dp"
+        android:orientation="vertical">
 
         <TextView
-            android:layout_marginRight="8dp"
-            android:textColor="@android:color/white"
             android:id="@+id/tv_time"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginRight="8dp"
             android:gravity="right"
-            android:text="00:00/00:00"/>
+            android:text="00:00/00:00"
+            android:textColor="@android:color/white" />
 
         <SeekBar
 
             android:id="@+id/seekbar_audio"
-            android:layout_marginRight="8dp"
-            android:layout_marginLeft="8dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="8dp"
             android:maxHeight="5dp"
             android:minHeight="5dp"
             android:progressDrawable="@drawable/audio_progress_horizontal"
@@ -75,43 +76,50 @@
 
 
             <Button
-                android:layout_weight="1"
                 android:id="@+id/btn_audio_playmode"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:background="@drawable/btn_audio_playmode_normal_selector" />
 
             <Button
-                android:layout_weight="1"
                 android:id="@+id/btn_audio_pre"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:background="@drawable/btn_audio_pre_selector" />
 
             <Button
-                android:layout_weight="1"
                 android:id="@+id/btn_audio_start_pause"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:background="@drawable/btn_audio_pause_selector" />
 
             <Button
-                android:layout_weight="1"
                 android:id="@+id/btn_audio_next"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:background="@drawable/btn_audio_next_selector" />
 
             <Button
-                android:layout_weight="1"
                 android:id="@+id/btn_swich_lyrc"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:background="@drawable/btn_swich_lyrc_selector" />
 
 
         </LinearLayout>
 
     </LinearLayout>
+
+    <myapplicatio.atguigu.com.xiangmuone.view.LyricShowView
+        android:id="@+id/lyric_show_view"
+        android:layout_below="@id/rl_top"
+        android:layout_above="@id/ll_bottom"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
 </RelativeLayout>

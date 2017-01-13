@@ -22,6 +22,7 @@ import myapplicatio.atguigu.com.xiangmuone.IMusicPlayerSevice;
 import myapplicatio.atguigu.com.xiangmuone.R;
 import myapplicatio.atguigu.com.xiangmuone.activity.SystemAudioPlayerActivity;
 import myapplicatio.atguigu.com.xiangmuone.bean.MediaItem;
+import myapplicatio.atguigu.com.xiangmuone.utils.CacheUtils;
 
 /**
  * Created by Baby on 2017/1/12.\
@@ -104,25 +105,39 @@ public class MusicPlayerService extends Service {
         public void seekTo(int postion) throws RemoteException {
             mediaPlayer.seekTo(postion);
         }
+
+        @Override
+        public String getAudioPath() throws RemoteException {
+            return mediaItem.getData();
+        }
     };
     private ArrayList<MediaItem> mediaItems;
     //音频是否加载完成
     private boolean isLoaded = false;
-    private MediaItem mediaItem ;
+    private MediaItem mediaItem;
     private int position;
     //播放器
     private MediaPlayer mediaPlayer;
+    //顺序播放
+    public static final int REPEATE_NOMAL = 1;
+    //单曲播放
+    public static final int REPEATE_SINGLE = 2;
+    //列表循环
+    public static final int REPEATE_ALL = 3;
 
+    private int playmode = REPEATE_NOMAL;
+    private boolean isNext = false;
 
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        return stub ;
+        return stub;
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
+        playmode = CacheUtils.getPlaymode(this, "playmode");
         getDataFromLocal();
     }
 
@@ -188,7 +203,7 @@ public class MusicPlayerService extends Service {
      *
      * @param position
      */
-    void openAudio(int position){
+    void openAudio(int position) {
         if (mediaItems != null && mediaItems.size() > 0) {
             mediaItem = mediaItems.get(position);
             this.position = position;
@@ -209,6 +224,7 @@ public class MusicPlayerService extends Service {
             try {
                 mediaPlayer.setDataSource(mediaItem.getData());
                 mediaPlayer.prepareAsync();
+                isNext =false;
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -219,7 +235,8 @@ public class MusicPlayerService extends Service {
         }
 
     }
-    class MyOnErrorListener implements MediaPlayer.OnErrorListener{
+
+    class MyOnErrorListener implements MediaPlayer.OnErrorListener {
 
         @Override
         public boolean onError(MediaPlayer mp, int what, int extra) {
@@ -229,15 +246,16 @@ public class MusicPlayerService extends Service {
     }
 
 
-    class MyOnCompletionListener implements MediaPlayer.OnCompletionListener{
+    class MyOnCompletionListener implements MediaPlayer.OnCompletionListener {
 
         @Override
         public void onCompletion(MediaPlayer mp) {
+            isNext = true;
             next();
         }
     }
 
-    class MyOnPreparedListener implements MediaPlayer.OnPreparedListener{
+    class MyOnPreparedListener implements MediaPlayer.OnPreparedListener {
 
         @Override
         public void onPrepared(MediaPlayer mp) {
@@ -254,7 +272,9 @@ public class MusicPlayerService extends Service {
         sendBroadcast(intent);
 
     }
+
     private NotificationManager nm;
+
     /**
      * 开始播放音频
      */
@@ -264,21 +284,21 @@ public class MusicPlayerService extends Service {
         nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
         Intent intent = new Intent(this, SystemAudioPlayerActivity.class);
-        intent.putExtra("notification",true);//标识来自状态栏
-        PendingIntent pendingIntent = PendingIntent.getActivity(this,0,intent,PendingIntent.FLAG_CANCEL_CURRENT);
+        intent.putExtra("notification", true);//标识来自状态栏
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
         Notification notificaton = null;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN) {
             notificaton = new Notification.Builder(this)
                     .setSmallIcon(R.drawable.notification_music_playing)
                     .setContentTitle("321音乐")
-                    .setContentText("正在播放:"+getAudioName())
+                    .setContentText("正在播放:" + getAudioName())
                     .setContentIntent(pendingIntent)
-                    .        build();
+                    .build();
 
             //点击后还存在属性
             notificaton.flags = Notification.FLAG_ONGOING_EVENT;
         }
-        nm.notify(1,notificaton);
+        nm.notify(1, notificaton);
 
     }
 
@@ -295,7 +315,7 @@ public class MusicPlayerService extends Service {
      * 得到歌曲的名称
      */
     String getAudioName() {
-        if(mediaItem != null) {
+        if (mediaItem != null) {
             return mediaItem.getName();
         }
         return "";
@@ -305,18 +325,18 @@ public class MusicPlayerService extends Service {
      * 得到歌曲演唱者的名字
      */
     String getArtistName() {
-        if(mediaItem != null) {
+        if (mediaItem != null) {
             return mediaItem.getArtist();
         }
-            return "";
+        return "";
     }
 
     /**
      * 得到歌曲的当前播放进度
      */
     int getCurrentPosition() {
-        if(mediaPlayer != null) {
-            return  mediaPlayer.getCurrentPosition();
+        if (mediaPlayer != null) {
+            return mediaPlayer.getCurrentPosition();
         }
         return 0;
     }
@@ -325,8 +345,8 @@ public class MusicPlayerService extends Service {
      * 得到歌曲的当前总进度
      */
     int getDuration() {
-        if(mediaPlayer != null) {
-            return  mediaPlayer.getDuration();
+        if (mediaPlayer != null) {
+            return mediaPlayer.getDuration();
         }
         return 0;
     }
@@ -335,13 +355,124 @@ public class MusicPlayerService extends Service {
      * 播放下一首歌曲
      */
     void next() {
+        //设置下一曲对应的位置
+        setNextPostion();
+        //根据对应的位置去播放
+        openNextAudio();
 
+    }
+
+    private void openNextAudio() {
+        int playmode = getPlayMode();
+
+        if (playmode == MusicPlayerService.REPEATE_NOMAL) {
+            if (position <= mediaItems.size() - 1) {
+                openAudio(position);
+            } else {
+                position = mediaItems.size() - 1;
+            }
+
+        } else if (playmode == MusicPlayerService.REPEATE_SINGLE) {
+            openAudio(position);
+
+        } else if (playmode == MusicPlayerService.REPEATE_ALL) {
+            openAudio(position);
+
+        } else {
+
+            if (position <= mediaItems.size() - 1) {
+                openAudio(position);
+            } else {
+                position = mediaItems.size() - 1;
+            }
+        }
+    }
+
+    private void setNextPostion() {
+        int playmode = getPlayMode();
+
+        if (playmode == MusicPlayerService.REPEATE_NOMAL) {
+            position++;
+        } else if (playmode == MusicPlayerService.REPEATE_SINGLE) {
+            if(!isNext) {
+                isNext = false;
+                position++;
+                if (position > mediaItems.size() - 1) {
+                    position = 0;
+                }
+            }
+        } else if (playmode == MusicPlayerService.REPEATE_ALL) {
+            position++;
+            if (position > mediaItems.size() - 1) {
+                position = 0;
+            }
+        } else {
+            position++;
+
+        }
     }
 
     /**
      * 播放上一首歌曲
      */
     void pre() {
+        //设置上一曲对应的位置
+        setPrePostion();
+        //根据对应的位置去播放
+        openPreAudio();
+    }
+
+    private void setPrePostion() {
+
+        int playmode = getPlayMode();
+
+        if (playmode == MusicPlayerService.REPEATE_NOMAL) {
+            position--;
+        } else if (playmode == MusicPlayerService.REPEATE_SINGLE) {
+            if(!isNext) {
+                isNext = false;
+                position--;
+                if (position <0) {
+                    position = mediaItems.size()-1;
+                }
+            }
+        } else if (playmode == MusicPlayerService.REPEATE_ALL) {
+            position--;
+            if (position<0) {
+                position = mediaItems.size()-1;
+            }
+        } else {
+            position--;
+
+        }
+
+    }
+
+    private void openPreAudio() {
+
+        int playmode = getPlayMode();
+
+        if (playmode == MusicPlayerService.REPEATE_NOMAL) {
+            if (position >=0) {
+                openAudio(position);
+            } else {
+                position = 0;
+            }
+
+        } else if (playmode == MusicPlayerService.REPEATE_SINGLE) {
+            openAudio(position);
+
+        } else if (playmode == MusicPlayerService.REPEATE_ALL) {
+            openAudio(position);
+
+        } else {
+
+            if (position >=0) {
+                openAudio(position);
+            } else {
+                position = 0;
+            }
+        }
 
     }
 
@@ -349,13 +480,14 @@ public class MusicPlayerService extends Service {
      * 得到播放模式
      */
     int getPlayMode() {
-        return 0;
+        return playmode;
     }
 
     /**
      * 设置播放模式
      */
     void setPlayMode(int mode) {
-
+        this.playmode = mode;
+        CacheUtils.setPlaymode(this, "playmode", playmode);
     }
 }
