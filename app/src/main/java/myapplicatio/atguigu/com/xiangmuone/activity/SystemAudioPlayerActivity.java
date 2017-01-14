@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.graphics.drawable.AnimationDrawable;
+import android.media.audiofx.Visualizer;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -26,11 +27,12 @@ import myapplicatio.atguigu.com.xiangmuone.R;
 import myapplicatio.atguigu.com.xiangmuone.service.MusicPlayerService;
 import myapplicatio.atguigu.com.xiangmuone.utils.LyricParaser;
 import myapplicatio.atguigu.com.xiangmuone.utils.Utils;
+import myapplicatio.atguigu.com.xiangmuone.view.BaseVisualizerView;
 import myapplicatio.atguigu.com.xiangmuone.view.LyricShowView;
 
 public class SystemAudioPlayerActivity extends AppCompatActivity implements View.OnClickListener {
 
-    private static final int SHOW_LYRIC = 2 ;
+    private static final int SHOW_LYRIC = 2;
     private ImageView ivicon;
     private TextView tvArtist;
     private TextView tvName;
@@ -43,12 +45,14 @@ public class SystemAudioPlayerActivity extends AppCompatActivity implements View
     private Button btnSwichLyrc;
     private int position;
     private LyricShowView lyric_show_view;
+    private BaseVisualizerView baseVisualizerView;
 
     private MyReceiver receiver;
     //进度更新
     private static final int PROGRESS = 1;
     private Utils utils;
     private boolean notification;
+    private Visualizer mVisualizer;
 
     /**
      * Find the Views in the layout<br />
@@ -58,39 +62,40 @@ public class SystemAudioPlayerActivity extends AppCompatActivity implements View
      */
     private void findViews() {
         setContentView(R.layout.activity_system_audio_player);
-        tvArtist = (TextView)findViewById( R.id.tv_artist );
-        tvName = (TextView)findViewById( R.id.tv_name );
-        tvTime = (TextView)findViewById( R.id.tv_time );
-        seekbarAudio = (SeekBar)findViewById( R.id.seekbar_audio );
-        btnAudioPlaymode = (Button)findViewById( R.id.btn_audio_playmode );
-        btnAudioPre = (Button)findViewById( R.id.btn_audio_pre );
-        btnAudioStartPause = (Button)findViewById( R.id.btn_audio_start_pause );
-        btnAudioNext = (Button)findViewById( R.id.btn_audio_next );
-        btnSwichLyrc = (Button)findViewById( R.id.btn_swich_lyrc );
-        ivicon = (ImageView)findViewById(R.id.iv_icon);
-        lyric_show_view = (LyricShowView)findViewById(R.id.lyric_show_view);
+        tvArtist = (TextView) findViewById(R.id.tv_artist);
+        tvName = (TextView) findViewById(R.id.tv_name);
+        tvTime = (TextView) findViewById(R.id.tv_time);
+        seekbarAudio = (SeekBar) findViewById(R.id.seekbar_audio);
+        btnAudioPlaymode = (Button) findViewById(R.id.btn_audio_playmode);
+        btnAudioPre = (Button) findViewById(R.id.btn_audio_pre);
+        btnAudioStartPause = (Button) findViewById(R.id.btn_audio_start_pause);
+        btnAudioNext = (Button) findViewById(R.id.btn_audio_next);
+        btnSwichLyrc = (Button) findViewById(R.id.btn_swich_lyrc);
+        ivicon = (ImageView) findViewById(R.id.iv_icon);
+        lyric_show_view = (LyricShowView) findViewById(R.id.lyric_show_view);
+        baseVisualizerView = (BaseVisualizerView)findViewById(R.id.baseVisualizerView);
 
         ivicon.setBackgroundResource(R.drawable.animation_list);
         AnimationDrawable drawable = (AnimationDrawable) ivicon.getBackground();
         drawable.start();
 
 
-        btnAudioPlaymode.setOnClickListener( this );
-        btnAudioPre.setOnClickListener( this );
-        btnAudioStartPause.setOnClickListener( this );
-        btnAudioNext.setOnClickListener( this );
-        btnSwichLyrc.setOnClickListener( this );
+        btnAudioPlaymode.setOnClickListener(this);
+        btnAudioPre.setOnClickListener(this);
+        btnAudioStartPause.setOnClickListener(this);
+        btnAudioNext.setOnClickListener(this);
+        btnSwichLyrc.setOnClickListener(this);
 
         //设置拖拽监听
         seekbarAudio.setOnSeekBarChangeListener(new MyOnSeekBarChangeListener());
 
     }
 
-    class MyOnSeekBarChangeListener implements SeekBar.OnSeekBarChangeListener{
+    class MyOnSeekBarChangeListener implements SeekBar.OnSeekBarChangeListener {
 
         @Override
         public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-            if(fromUser) {
+            if (fromUser) {
                 try {
                     service.seekTo(progress);
                 } catch (RemoteException e) {
@@ -118,10 +123,10 @@ public class SystemAudioPlayerActivity extends AppCompatActivity implements View
      */
     @Override
     public void onClick(View v) {
-        if ( v == btnAudioPlaymode ) {
+        if (v == btnAudioPlaymode) {
             // Handle clicks for btnAudioPlaymode
             changeplaymode();
-        } else if ( v == btnAudioPre ) {
+        } else if (v == btnAudioPre) {
             // Handle clicks for btnAudioPre
             try {
                 service.pre();
@@ -129,16 +134,16 @@ public class SystemAudioPlayerActivity extends AppCompatActivity implements View
                 e.printStackTrace();
             }
 
-        } else if ( v == btnAudioStartPause ) {
+        } else if (v == btnAudioStartPause) {
             // Handle clicks for btnAudioStartPause
 
             try {
-                if(service.isPlaying()) {
+                if (service.isPlaying()) {
                     //暂停
                     service.pause();
                     //按钮状态--播放
                     btnAudioStartPause.setBackgroundResource(R.drawable.btn_audio_start_selector);
-                }else{
+                } else {
                     //播放
                     service.start();
                     //按钮状态--暂停
@@ -148,7 +153,7 @@ public class SystemAudioPlayerActivity extends AppCompatActivity implements View
                 e.printStackTrace();
             }
 
-        } else if ( v == btnAudioNext ) {
+        } else if (v == btnAudioNext) {
             // Handle clicks for btnAudioNext
             try {
                 if (!service.isPlaying()) {
@@ -161,14 +166,14 @@ public class SystemAudioPlayerActivity extends AppCompatActivity implements View
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
-        } else if ( v == btnSwichLyrc ) {
+        } else if (v == btnSwichLyrc) {
             // Handle clicks for btnSwichLyrc
         }
     }
 
     private void changeplaymode() {
         try {
-            int playmode =  service.getPlayMode();
+            int playmode = service.getPlayMode();
 
             if (playmode == MusicPlayerService.REPEATE_NOMAL) {
                 playmode = MusicPlayerService.REPEATE_SINGLE;
@@ -221,8 +226,8 @@ public class SystemAudioPlayerActivity extends AppCompatActivity implements View
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
             service = IMusicPlayerSevice.Stub.asInterface(iBinder);
 
-            if(service != null) {
-                if(!notification) {
+            if (service != null) {
+                if (!notification) {
                     try {
                         //开始播放
                         service.openAudio(position);
@@ -230,10 +235,10 @@ public class SystemAudioPlayerActivity extends AppCompatActivity implements View
                     } catch (RemoteException e) {
                         e.printStackTrace();
                     }
-                }else{
+                } else {
                     //再次显示
                     showViewData();
-            }
+                }
             }
 
         }
@@ -248,11 +253,11 @@ public class SystemAudioPlayerActivity extends AppCompatActivity implements View
         }
     };
 
-    private Handler handler = new Handler(){
+    private Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            switch (msg.what){
+            switch (msg.what) {
                 case SHOW_LYRIC:
                     try {
                         int currentPosition = service.getCurrentPosition();
@@ -268,7 +273,7 @@ public class SystemAudioPlayerActivity extends AppCompatActivity implements View
                 case PROGRESS:
                     try {
                         int currentPosition = service.getCurrentPosition();
-                        tvTime.setText(utils.stringForTime(currentPosition)+"/"+utils.stringForTime(service.getDuration()));
+                        tvTime.setText(utils.stringForTime(currentPosition) + "/" + utils.stringForTime(service.getDuration()));
 
                         //seekbar进度更新
                         seekbarAudio.setProgress(currentPosition);
@@ -278,7 +283,7 @@ public class SystemAudioPlayerActivity extends AppCompatActivity implements View
                     }
 
                     removeMessages(PROGRESS);
-                    sendEmptyMessageDelayed(PROGRESS,1000);
+                    sendEmptyMessageDelayed(PROGRESS, 1000);
 
                     break;
             }
@@ -295,29 +300,32 @@ public class SystemAudioPlayerActivity extends AppCompatActivity implements View
         //绑定方式启动服务
         startAndBindServiced();
     }
+
     //接收广播
     private void initData() {
         receiver = new MyReceiver();
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(MusicPlayerService.OPEN_COMPLETE);
-        registerReceiver(receiver,intentFilter);
+        registerReceiver(receiver, intentFilter);
 
         utils = new Utils();
 
     }
 
 
-    class MyReceiver extends BroadcastReceiver{
+    class MyReceiver extends BroadcastReceiver {
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            if(MusicPlayerService.OPEN_COMPLETE.equals(intent.getAction())) {
+            if (MusicPlayerService.OPEN_COMPLETE.equals(intent.getAction())) {
                 showViewData();
             }
         }
     }
+
     //显示视图的数据
     private void showViewData() {
+        setupVisualizerFxAndUi();
         try {
             tvArtist.setText(service.getArtistName());
             tvName.setText(service.getAudioName());
@@ -333,18 +341,18 @@ public class SystemAudioPlayerActivity extends AppCompatActivity implements View
 
             String path = service.getAudioPath();//mnt/sdcard/audio/beij.mp3
 
-            path = path.substring(0,path.lastIndexOf("."));
+            path = path.substring(0, path.lastIndexOf("."));
 
-            File file = new File(path+".lrc");
-            if(!file.exists()){
-                file = new File(path+".txt");
+            File file = new File(path + ".lrc");
+            if (!file.exists()) {
+                file = new File(path + ".txt");
             }
 
 
             LyricParaser lyricParaser = new LyricParaser();
             lyricParaser.readFile(file);
-            
-            if(lyricParaser.isExistsLyric()) {
+
+            if (lyricParaser.isExistsLyric()) {
 
                 lyric_show_view.setLyrics(lyricParaser.getLyricBeens());
                 //歌词同步
@@ -355,15 +363,43 @@ public class SystemAudioPlayerActivity extends AppCompatActivity implements View
             e.printStackTrace();
         }
     }
+    /**
+     * 生成一个VisualizerView对象，使音频频谱的波段能够反映到 VisualizerView上
+     */
+    private void setupVisualizerFxAndUi()
+    {
+
+        int audioSessionid = 0;
+        try {
+            audioSessionid = service.getAudioSessionId();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+        System.out.println("audioSessionid=="+audioSessionid);
+        mVisualizer = new Visualizer(audioSessionid);
+        // 参数内必须是2的位数
+        mVisualizer.setCaptureSize(Visualizer.getCaptureSizeRange()[1]);
+        // 设置允许波形表示，并且捕获它
+        baseVisualizerView.setVisualizer(mVisualizer);
+        mVisualizer.setEnabled(true);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (isFinishing()) {
+           mVisualizer.release();
+        }
+    }
 
     @Override
     protected void onDestroy() {
-        if(receiver != null) {
+        if (receiver != null) {
             unregisterReceiver(receiver);
             receiver = null;
         }
-        
-        if(conn != null) {
+
+        if (conn != null) {
             unbindService(conn);
             conn = null;
         }
@@ -374,7 +410,7 @@ public class SystemAudioPlayerActivity extends AppCompatActivity implements View
     private void startAndBindServiced() {
         Intent intent = new Intent(this, MusicPlayerService.class);
 
-        bindService(intent,conn, Context.BIND_AUTO_CREATE);
+        bindService(intent, conn, Context.BIND_AUTO_CREATE);
         startService(intent);//防止服务多次创建
     }
 
@@ -390,4 +426,6 @@ public class SystemAudioPlayerActivity extends AppCompatActivity implements View
             position = getIntent().getIntExtra("position", 0);
         }
     }
+
+
 }

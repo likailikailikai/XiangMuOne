@@ -4,20 +4,16 @@
     android:id="@+id/activity_welcome"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/huanying"
     tools:context="myapplicatio.atguigu.com.xiangmuone.WelcomeActivity">
 
-    <ImageView
-        android:id="@+id/iv_icon"
-        android:layout_centerInParent="true"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@drawable/login_icon" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
         android:orientation="horizontal"
+        android:layout_centerInParent="true"
         android:layout_below="@+id/iv_icon">
 
         <ProgressBar
