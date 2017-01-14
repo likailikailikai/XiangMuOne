@@ -234,7 +234,7 @@ public class LyricParaser {
             //1.根据":"切成02和04.12
             String[] s1 = timeStr.split(":");
             //2.根据“.”把04.12切成04和12
-            String[] s2 = s1[1].split("//.");
+            String[] s2 = s1[1].split("\\.");
             //3.转换成long类型的毫秒时间
             //分
             long min = Long.valueOf(s1[0]);//02
@@ -260,8 +260,8 @@ public class LyricParaser {
      */
     private int getCountTag(String line) {
         int count = 1;
-        String[] left = line.split("//[");
-        String[] right = line.split("//]");
+        String[] left = line.split("\\[");
+        String[] right = line.split("\\]");
 
         if (left.length == 0 && right.length == 0) {
             count = 1;

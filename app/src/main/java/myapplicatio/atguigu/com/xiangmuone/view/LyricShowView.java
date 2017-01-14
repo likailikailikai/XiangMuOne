@@ -48,13 +48,13 @@ public class LyricShowView extends TextView {
         //创建画笔
         paint = new Paint();
         paint.setTextSize(DensityUtil.dip2px(mContext,16));
-        paint.setColor(Color.GREEN);
+        paint.setColor(Color.YELLOW);
         paint.setTextAlign(Paint.Align.CENTER);
         paint.setAntiAlias(true);
 
         nopaint = new Paint();
         nopaint.setTextSize(DensityUtil.dip2px(mContext,16));
-        nopaint.setColor(Color.WHITE);
+        nopaint.setColor(Color.CYAN);
         nopaint.setTextAlign(Paint.Align.CENTER);
         nopaint.setAntiAlias(true);
 
@@ -95,7 +95,7 @@ public class LyricShowView extends TextView {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        if (lyricBeen != null && lyricBeen.size() > 0) {
+        if (lyricBeen != null && lyricBeen.size() > 0 && index< lyricBeen.size()) {
             //绘制歌词
             //当前句-绿色
             String content = lyricBeen.get(index).getContent();

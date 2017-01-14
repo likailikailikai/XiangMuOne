@@ -4,7 +4,7 @@
     android:id="@+id/activity_system_audio_player"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/meinv"
+    android:background="@drawable/yueliang"
     tools:context="myapplicatio.atguigu.com.xiangmuone.activity.SystemAudioPlayerActivity">
 
     <RelativeLayout

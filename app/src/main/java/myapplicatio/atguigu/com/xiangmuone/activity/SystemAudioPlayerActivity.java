@@ -262,6 +262,8 @@ public class SystemAudioPlayerActivity extends AppCompatActivity implements View
                     } catch (RemoteException e) {
                         e.printStackTrace();
                     }
+                    handler.removeMessages(SHOW_LYRIC);
+                    handler.sendEmptyMessage(SHOW_LYRIC);
                     break;
                 case PROGRESS:
                     try {

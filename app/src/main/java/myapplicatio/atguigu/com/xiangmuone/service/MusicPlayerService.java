@@ -290,7 +290,7 @@ public class MusicPlayerService extends Service {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN) {
             notificaton = new Notification.Builder(this)
                     .setSmallIcon(R.drawable.notification_music_playing)
-                    .setContentTitle("321音乐")
+                    .setContentTitle("幻龙影音")
                     .setContentText("正在播放:" + getAudioName())
                     .setContentIntent(pendingIntent)
                     .build();
