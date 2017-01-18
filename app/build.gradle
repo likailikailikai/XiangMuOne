@@ -37,4 +37,10 @@ dependencies {
     compile files('libs/Msc.jar')
     compile files('libs/Sunflower.jar')
     compile 'com.google.code.gson:gson:2.2.4'
+    compile 'com.jakewharton:butterknife:7.0.1'
+    compile project(':PhotoView_library')
+    compile project(':jcvideoplayer-lib')
+    compile 'com.android.support:recyclerview-v7:25.1.0'
+
+
 }

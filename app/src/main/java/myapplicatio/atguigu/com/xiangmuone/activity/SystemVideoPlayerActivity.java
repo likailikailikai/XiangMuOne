@@ -682,6 +682,8 @@ public class SystemVideoPlayerActivity extends Activity implements View.OnClickL
         //设置监听滑动声音
         seekbarVoice.setOnSeekBarChangeListener(new VoiceOnSeekBarChangeListener());
 
+
+
     }
 
     private void getData() {
